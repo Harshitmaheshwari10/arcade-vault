@@ -63,6 +63,7 @@
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const W=480,H=520;
 let player,bullets,asteroids,particles,powerups,score,best=0,wave,lives,running=false,keys={},lastShot=0,waveTimer,stars=[];
+ let wavePending=false;
 
 function initStars(){stars=[];for(let i=0;i<80;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+0.5,s:Math.random()*0.5+0.2});}
 
@@ -70,7 +71,11 @@ function startGame(){
   document.getElementById('overlay').style.display='none';
   player={x:W/2,y:H-60,w:36,h:36,speed:5,triple:false,tripleTimer:0};
   bullets=[];asteroids=[];particles=[];powerups=[];
-  score=0;wave=1;lives=3;running=true;
+  score=0;
+wave=1;
+lives=3;
+running=true;
+wavePending=false;
   document.getElementById('score').textContent=0;
   document.getElementById('wave').textContent=1;
   updateLives();
@@ -196,8 +201,23 @@ for(let i = asteroids.length - 1; i >= 0; i--) {
     }
   });
 
-  // next wave
-  if(asteroids.length===0){wave++;document.getElementById('wave').textContent=wave;setTimeout(spawnWave,1200);}
+ // next wave
+if(asteroids.length === 0 && !wavePending){
+
+    wavePending = true;
+
+    wave++;
+
+    document.getElementById('wave').textContent = wave;
+
+    setTimeout(() => {
+
+        spawnWave();
+
+        wavePending = false;
+
+    }, 1200);
+}
 
   // particles
   particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;p.vy+=0.1;return p.life>0;});
