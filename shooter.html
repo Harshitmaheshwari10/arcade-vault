@@ -74,6 +74,8 @@ function startGame(){
   score=0;
 wave=1;
 lives=3;
+ lastShot = 0;
+keys = {};
 running=true;
 wavePending=false;
   document.getElementById('score').textContent=0;
@@ -125,24 +127,46 @@ function update(){
 
   // powerups
   powerups=powerups.filter(p=>{p.y+=1.2;return p.y<H+30;});
+// bullet-asteroid collisions
+for(let bi = bullets.length - 1; bi >= 0; bi--){
 
-  // bullet-asteroid collisions
-  bullets.forEach((b,bi)=>{
-    asteroids.forEach((a,ai)=>{
-      if(Math.hypot(b.x-a.x,b.y-a.y)<a.r+4){
-        spawnParticles(a.x,a.y,'#f59e0b',8);
-        a.hp--;
-        if(a.hp<=0){
-          score+=Math.floor(a.r);
-          document.getElementById('score').textContent=score;
-          if(Math.random()<0.15)powerups.push({x:a.x,y:a.y,type:'triple'});
-          spawnParticles(a.x,a.y,'#fbbf24',16);
-          asteroids.splice(ai,1);
+    const b = bullets[bi];
+
+    for(let ai = asteroids.length - 1; ai >= 0; ai--){
+
+        const a = asteroids[ai];
+
+        if(Math.hypot(b.x - a.x, b.y - a.y) < a.r + 4){
+
+            spawnParticles(a.x,a.y,'#f59e0b',8);
+
+            a.hp--;
+
+            bullets.splice(bi,1);
+
+            if(a.hp <= 0){
+
+                score += Math.floor(a.r);
+
+                document.getElementById('score').textContent = score;
+
+                if(Math.random() < 0.15){
+                    powerups.push({
+                        x:a.x,
+                        y:a.y,
+                        type:'triple'
+                    });
+                }
+
+                spawnParticles(a.x,a.y,'#fbbf24',16);
+
+                asteroids.splice(ai,1);
+            }
+
+            break;
         }
-        bullets.splice(bi,1);
-      }
-    });
-  });
+    }
+}
 
   // asteroid-player collisions
 for(let i = asteroids.length - 1; i >= 0; i--) {
