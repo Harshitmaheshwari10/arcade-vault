@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tic Tac Toe — Arcade Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0a0b0f;--surface:#12141a;--card:#1a1d26;--border:#2a2d3a;--accent:#7c3aed;--accent2:#06b6d4;--amber:#f59e0b;--text:#e2e8f0;--muted:#64748b;--green:#10b981;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+  nav{width:100%;display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);}
+  .logo{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--accent2);} .logo span{color:var(--accent);}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;}
+  .game-area{padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem;width:100%;max-width:480px;}
+  h1{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--amber);}
+  .mode-btns{display:flex;gap:.75rem;}
+  .mode-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:.5rem 1.1rem;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+  .mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .status{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--accent2);height:24px;text-align:center;}
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:300px;}
+  .cell{background:var(--card);border:2px solid var(--border);border-radius:12px;height:90px;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace;font-size:28px;cursor:pointer;transition:all .2s;user-select:none;}
+  .cell:hover:not(.filled){background:var(--surface);border-color:var(--accent);transform:scale(1.03);}
+  .cell.x{color:var(--accent);border-color:var(--accent);}
+  .cell.o{color:var(--accent2);border-color:var(--accent2);}
+  .cell.win{background:rgba(124,58,237,0.15);border-color:var(--amber);animation:pulse .6s infinite alternate;}
+  @keyframes pulse{from{box-shadow:0 0 0 0 rgba(245,158,11,0.3);}to{box-shadow:0 0 12px 4px rgba(245,158,11,0.4);}}
+  .scoreboard{display:flex;gap:1.5rem;font-family:'Press Start 2P',monospace;font-size:9px;}
+  .score-item{text-align:center;} .score-item span{color:var(--muted);display:block;margin-bottom:.4rem;}
+  .score-item strong{font-size:20px;}
+  .x-score{color:var(--accent);} .draw-score{color:var(--muted);} .o-score{color:var(--accent2);}
+  .restart-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.55rem 1.3rem;border-radius:8px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;transition:all .2s;}
+  .restart-btn:hover{border-color:var(--accent);color:var(--text);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">ARCADE<span>VAULT</span></div>
+  <a href="index.html">← Back to hub</a>
+</nav>
+<div class="game-area">
+  <h1>⭕ Tic Tac Toe</h1>
+  <div class="mode-btns">
+    <button class="mode-btn active" onclick="setMode('ai')" id="btn-ai">vs AI</button>
+    <button class="mode-btn" onclick="setMode('2p')" id="btn-2p">2 Players</button>
+  </div>
+  <div class="scoreboard">
+    <div class="score-item"><span>X</span><strong class="x-score" id="sx">0</strong></div>
+    <div class="score-item"><span>Draw</span><strong class="draw-score" id="sd">0</strong></div>
+    <div class="score-item"><span>O</span><strong class="o-score" id="so">0</strong></div>
+  </div>
+  <div class="status" id="status">X goes first</div>
+  <div class="board" id="board"></div>
+  <button class="restart-btn" onclick="resetGame()">NEW GAME</button>
+</div>
+<script>
+let board,current,scores={X:0,O:0,D:0},mode='ai',gameOver;
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-ai').className='mode-btn'+(m==='ai'?' active':'');
+  document.getElementById('btn-2p').className='mode-btn'+(m==='2p'?' active':'');
+  resetGame();
+}
+
+function resetGame(){
+  board=Array(9).fill('');current='X';gameOver=false;
+  document.getElementById('status').textContent='X goes first';
+  renderBoard();
+}
+
+function renderBoard(){
+  const el=document.getElementById('board');
+  el.innerHTML='';
+  board.forEach((v,i)=>{
+    const c=document.createElement('div');
+    c.className='cell'+(v?' filled '+v.toLowerCase():'');
+    c.textContent=v;
+    if(!v&&!gameOver)c.onclick=()=>play(i);
+    el.appendChild(c);
+  });
+}
+
+function play(i){
+  if(board[i]||gameOver)return;
+  board[i]=current;
+  const win=checkWin();
+  if(win){
+    highlight(win);
+    scores[current]++;updateScores();
+    document.getElementById('status').textContent=current+' WINS! 🎉';
+    gameOver=true;renderBoard();highlight(win);return;
+  }
+  if(board.every(v=>v)){
+    scores.D++;updateScores();
+    document.getElementById('status').textContent="It's a draw!";
+    gameOver=true;renderBoard();return;
+  }
+  current=current==='X'?'O':'X';
+  document.getElementById('status').textContent=current+"'s turn";
+  renderBoard();
+  if(mode==='ai'&&current==='O'&&!gameOver)setTimeout(aiMove,350);
+}
+
+function checkWin(){
+  return WINS.find(w=>board[w[0]]&&board[w[0]]===board[w[1]]&&board[w[1]]===board[w[2]])||null;
+}
+
+function highlight(win){
+  const cells=document.querySelectorAll('.cell');
+  win.forEach(i=>cells[i].classList.add('win'));
+}
+
+function minimax(b,isMax,alpha,beta){
+  const w=WINS.find(w=>b[w[0]]&&b[w[0]]===b[w[1]]&&b[w[1]]===b[w[2]]);
+  if(w)return b[w[0]]==='O'?10:-10;
+  if(b.every(v=>v))return 0;
+  if(isMax){
+    let best=-Infinity;
+    b.forEach((_,i)=>{if(!b[i]){b[i]='O';best=Math.max(best,minimax(b,false,alpha,beta));b[i]='';alpha=Math.max(alpha,best);if(beta<=alpha)return;}});
+    return best;
+  }else{
+    let best=Infinity;
+    b.forEach((_,i)=>{if(!b[i]){b[i]='X';best=Math.min(best,minimax(b,true,alpha,beta));b[i]='';beta=Math.min(beta,best);if(beta<=alpha)return;}});
+    return best;
+  }
+}
+
+function aiMove(){
+  if(gameOver)return;
+  let best=-Infinity,move=0;
+  board.forEach((_,i)=>{if(!board[i]){board[i]='O';const s=minimax([...board],false,-Infinity,Infinity);board[i]='';if(s>best){best=s;move=i;}}});
+  play(move);
+}
+
+function updateScores(){
+  document.getElementById('sx').textContent=scores.X;
+  document.getElementById('so').textContent=scores.O;
+  document.getElementById('sd').textContent=scores.D;
+}
+
+resetGame();
+</script>
+</body>
+</html>

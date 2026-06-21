@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Arcade Vault — by Harshit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#0a0b0f;
+    --surface:#12141a;
+    --card:#1a1d26;
+    --border:#2a2d3a;
+    --accent:#7c3aed;
+    --accent2:#06b6d4;
+    --green:#10b981;
+    --red:#ef4444;
+    --amber:#f59e0b;
+    --text:#e2e8f0;
+    --muted:#64748b;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2rem;border-bottom:1px solid var(--border);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;background:rgba(10,11,15,0.9);}
+  .logo{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--accent2);letter-spacing:1px;}
+  .logo span{color:var(--accent);}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;}
+  nav a:hover{color:var(--text);}
+  .nav-links{display:flex;gap:1.5rem;align-items:center;}
+  .nav-badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;}
+
+  /* HERO */
+  .hero{text-align:center;padding:5rem 2rem 3rem;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none;}
+  .hero-eyebrow{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--accent2);letter-spacing:3px;margin-bottom:1.5rem;opacity:.8;}
+  .hero h1{font-family:'Press Start 2P',monospace;font-size:clamp(22px,4vw,40px);line-height:1.5;margin-bottom:1.5rem;}
+  .hero h1 .hl{color:var(--accent);}
+  .hero p{color:var(--muted);max-width:480px;margin:0 auto 2.5rem;font-size:15px;line-height:1.7;}
+  .hero-cta{display:inline-flex;align-items:center;gap:.5rem;background:var(--accent);color:#fff;padding:.75rem 1.8rem;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;transition:opacity .2s;}
+  .hero-cta:hover{opacity:.85;}
+  .hero-cta svg{width:16px;height:16px;}
+  .stats{display:flex;justify-content:center;gap:3rem;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);}
+  .stat-num{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--accent2);}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:.3rem;}
+
+  /* GAME GRID */
+  .section{padding:3rem 2rem;max-width:1100px;margin:0 auto;}
+  .section-title{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--muted);letter-spacing:2px;margin-bottom:2rem;}
+  .games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;}
+
+  .game-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s,border-color .2s,box-shadow .2s;display:block;}
+  .game-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 0 24px rgba(124,58,237,0.15);}
+  .game-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:56px;position:relative;overflow:hidden;}
+  .game-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 60%,var(--card));}
+  .thumb-snake{background:linear-gradient(135deg,#0f2a1a,#0d1f1a);}
+  .thumb-shooter{background:linear-gradient(135deg,#1a0f2a,#130d1f);}
+  .thumb-ttt{background:linear-gradient(135deg,#1a1a0a,#1f1d0a);}
+  .thumb-runner{background:linear-gradient(135deg,#0a1a2a,#0a1520);}
+  .game-info{padding:1.1rem 1.25rem 1.25rem;}
+  .game-tag{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.5rem;}
+  .tag-green{color:var(--green);}
+  .tag-purple{color:var(--accent);}
+  .tag-amber{color:var(--amber);}
+  .tag-cyan{color:var(--accent2);}
+  .game-name{font-family:'Press Start 2P',monospace;font-size:12px;margin-bottom:.6rem;line-height:1.6;}
+  .game-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1rem;}
+  .game-footer{display:flex;align-items:center;justify-content:space-between;}
+  .game-keys{display:flex;gap:.3rem;}
+  .key{background:var(--surface);border:1px solid var(--border);border-radius:4px;font-size:10px;padding:2px 6px;color:var(--muted);font-family:monospace;}
+  .play-btn{font-size:11px;font-weight:600;color:var(--accent2);display:flex;align-items:center;gap:4px;}
+  .play-btn::after{content:'→';}
+
+  /* FOOTER */
+  footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--border);color:var(--muted);font-size:13px;}
+  footer a{color:var(--accent2);text-decoration:none;}
+  footer .pixel{font-family:'Press Start 2P',monospace;font-size:9px;margin-bottom:.75rem;color:var(--muted);letter-spacing:1px;}
+
+  /* SCANLINE EFFECT */
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:999;}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<nav>
+  <div class="logo">ARCADE<span>VAULT</span></div>
+  <div class="nav-links">
+    <a href="snake.html">Snake</a>
+    <a href="shooter.html">Shooter</a>
+    <a href="tictactoe.html">Tic Tac Toe</a>
+    <a href="runner.html">Runner</a>
+    <span class="nav-badge">4 Games</span>
+  </div>
+</nav>
+
+<section class="hero">
+  <p class="hero-eyebrow">🕹 open source · built with vanilla js</p>
+  <h1>Four games.<br/><span class="hl">Zero installs.</span></h1>
+  <p>A collection of classic arcade games built from scratch with HTML5 Canvas and JavaScript. No frameworks, no libraries — just raw code.</p>
+  <a href="snake.html" class="hero-cta">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><polygon points="5 3 19 12 5 21 5 3" stroke-width="2" stroke-linejoin="round"/></svg>
+    Play now
+  </a>
+  <div class="stats">
+    <div><div class="stat-num">4</div><div class="stat-label">Games</div></div>
+    <div><div class="stat-num">0</div><div class="stat-label">Dependencies</div></div>
+    <div><div class="stat-num">~800</div><div class="stat-label">Lines of code</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <p class="section-title">// choose your game</p>
+  <div class="games-grid">
+
+    <a href="snake.html" class="game-card">
+      <div class="game-thumb thumb-snake">🐍</div>
+      <div class="game-info">
+        <div class="game-tag tag-green">Classic</div>
+        <div class="game-name">Snake</div>
+        <p class="game-desc">Eat food, grow longer, don't hit the walls. How long can you survive?</p>
+        <div class="game-footer">
+          <div class="game-keys"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></div>
+          <span class="play-btn">Play</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="shooter.html" class="game-card">
+      <div class="game-thumb thumb-shooter">🚀</div>
+      <div class="game-info">
+        <div class="game-tag tag-purple">Action</div>
+        <div class="game-name">Space Shooter</div>
+        <p class="game-desc">Blast incoming asteroids. Wave-based difficulty with power-ups.</p>
+        <div class="game-footer">
+          <div class="game-keys"><span class="key">←</span><span class="key">→</span><span class="key">Space</span></div>
+          <span class="play-btn">Play</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="tictactoe.html" class="game-card">
+      <div class="game-thumb thumb-ttt">⭕</div>
+      <div class="game-info">
+        <div class="game-tag tag-amber">Strategy</div>
+        <div class="game-name">Tic Tac Toe</div>
+        <p class="game-desc">Play against a smart AI or challenge a friend in 2-player mode.</p>
+        <div class="game-footer">
+          <div class="game-keys"><span class="key">Click</span></div>
+          <span class="play-btn">Play</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="runner.html" class="game-card">
+      <div class="game-thumb thumb-runner">🏃</div>
+      <div class="game-info">
+        <div class="game-tag tag-cyan">Endless</div>
+        <div class="game-name">Endless Runner</div>
+        <p class="game-desc">Jump over obstacles as the world speeds up. Survive as long as you can.</p>
+        <div class="game-footer">
+          <div class="game-keys"><span class="key">Space</span><span class="key">↑</span></div>
+          <span class="play-btn">Play</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<footer>
+  <p class="pixel">// ARCADE VAULT v1.0</p>
+  <p>Built by <a href="https://github.com/Harshitmaheshwari10">Harshit Maheshwari</a> · B.Tech IT, Manipal University Jaipur</p>
+  <p style="margin-top:.5rem;">Open source on <a href="https://github.com/Harshitmaheshwari10/arcade-vault">GitHub</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Endless Runner — Arcade Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0a0b0f;--surface:#12141a;--card:#1a1d26;--border:#2a2d3a;--accent:#7c3aed;--accent2:#06b6d4;--text:#e2e8f0;--muted:#64748b;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+  nav{width:100%;display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);}
+  .logo{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--accent2);} .logo span{color:var(--accent);}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;}
+  .game-area{padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;}
+  h1{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--accent2);}
+  .hud{display:flex;gap:2.5rem;font-family:'Press Start 2P',monospace;font-size:10px;}
+  .hud-item span{color:var(--muted);display:block;margin-bottom:.3rem;}
+  .hud-item strong{color:var(--accent2);font-size:14px;}
+  canvas{border:2px solid var(--border);border-radius:8px;display:block;}
+  .controls{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+  .ctrl-hint{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.4rem .9rem;font-size:12px;color:var(--muted);}
+  .ctrl-hint kbd{color:var(--text);font-weight:600;}
+  .canvas-wrap{position:relative;}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,11,15,0.88);border-radius:8px;gap:1rem;font-family:'Press Start 2P',monospace;}
+  .overlay h2{font-size:18px;color:var(--accent2);}
+  .overlay.gameover h2{color:#ef4444;}
+  .overlay p{font-size:9px;color:var(--muted);line-height:2.2;text-align:center;}
+  .restart-btn{background:var(--accent2);color:#000;border:none;padding:.6rem 1.4rem;border-radius:6px;font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;margin-top:.5rem;font-weight:700;}
+  .restart-btn:hover{opacity:.85;}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">ARCADE<span>VAULT</span></div>
+  <a href="index.html">← Back to hub</a>
+</nav>
+<div class="game-area">
+  <h1>🏃 Endless Runner</h1>
+  <div class="hud">
+    <div class="hud-item"><span>Score</span><strong id="score">0</strong></div>
+    <div class="hud-item"><span>Best</span><strong id="best">0</strong></div>
+    <div class="hud-item"><span>Speed</span><strong id="speed">1x</strong></div>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="c" width="560" height="220"></canvas>
+    <div class="overlay" id="overlay">
+      <h2>ENDLESS RUNNER</h2>
+      <p>Jump over obstacles as the world speeds up<br/>Double jump available!<br/>How long can you survive?</p>
+      <button class="restart-btn" onclick="startGame()">RUN</button>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="ctrl-hint"><kbd>Space</kbd> or <kbd>↑</kbd> — jump</span>
+    <span class="ctrl-hint"><kbd>Double tap</kbd> — double jump</span>
+    <span class="ctrl-hint"><kbd>R</kbd> — restart</span>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const W=560,H=220,GROUND=170;
+let player,obstacles,clouds,particles,score,best=0,speed,running=false,frame,bgOffset=0;
+
+function startGame(){
+  document.getElementById('overlay').style.display='none';
+  player={x:70,y:GROUND,w:28,h:36,vy:0,jumps:0,maxJumps:2,alive:true};
+  obstacles=[];clouds=[];particles=[];
+  score=0;speed=3.5;frame=0;running=true;
+  for(let i=0;i<4;i++)clouds.push({x:Math.random()*W,y:Math.random()*50+20,w:Math.random()*60+40,s:Math.random()*0.4+0.2});
+  requestAnimationFrame(gameLoop);
+}
+
+function jump(){
+  if(!running)return;
+  if(player.jumps<player.maxJumps){player.vy=-10.5;player.jumps++;spawnParticles(player.x+player.w/2,player.y+player.h,'#7c3aed',6);}
+}
+
+function gameLoop(){
+  if(!running)return;
+  update();draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(){
+  frame++;
+  score=Math.floor(frame/6);
+  document.getElementById('score').textContent=score;
+  speed=3.5+score*0.012;
+  document.getElementById('speed').textContent=(speed).toFixed(1)+'x';
+
+  // player physics
+  player.vy+=0.55;
+  player.y+=player.vy;
+  if(player.y>=GROUND){player.y=GROUND;player.vy=0;player.jumps=0;}
+
+  // spawn obstacles
+  const lastX=obstacles.length?obstacles[obstacles.length-1].x:0;
+  const minGap=Math.max(180,320-score*0.5);
+  if(obstacles.length===0||W-lastX>minGap+Math.random()*120){
+    const h=Math.random()<0.3?55:38;
+    const type=Math.random()<0.25?'double':'single';
+    obstacles.push({x:W+10,y:GROUND+player.h-h,w:22,h,type});
+    if(type==='double')obstacles.push({x:W+60,y:GROUND+player.h-(h-10),w:18,h:h-10,type:'single'});
+  }
+
+  // move obstacles
+  obstacles=obstacles.filter(o=>{o.x-=speed;return o.x>-50;});
+
+  // collision
+  obstacles.forEach(o=>{
+    if(player.x+player.w-4>o.x&&player.x+4<o.x+o.w&&player.y+player.h-2>o.y&&player.y<o.y+o.h){
+      spawnParticles(player.x+player.w/2,player.y+player.h/2,'#ef4444',20);
+      endGame();
+    }
+  });
+
+  // clouds
+  clouds.forEach(c=>{c.x-=c.s;if(c.x<-c.w)c.x=W+c.w;});
+
+  // particles
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life--;return p.life>0;});
+
+  bgOffset=(bgOffset+speed*0.5)%W;
+}
+
+function spawnParticles(x,y,col,n){
+  for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5-2,life:Math.random()*15+8,col});
+}
+
+function draw(){
+  // sky
+  ctx.fillStyle='#080a12';ctx.fillRect(0,0,W,H);
+
+  // stars
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  for(let i=0;i<30;i++){ctx.beginPath();ctx.arc((i*137+bgOffset)%W,(i*31)%80,0.8,0,Math.PI*2);ctx.fill();}
+
+  // clouds
+  clouds.forEach(c=>{
+    ctx.fillStyle='rgba(100,116,139,0.18)';
+    ctx.beginPath();ctx.ellipse(c.x,c.y,c.w/2,14,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(c.x-12,c.y+8,c.w/3,10,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(c.x+15,c.y+6,c.w/3.5,9,0,0,Math.PI*2);ctx.fill();
+  });
+
+  // ground
+  ctx.fillStyle='#1e293b';ctx.fillRect(0,GROUND+player.h,W,H-(GROUND+player.h));
+  ctx.fillStyle='#334155';ctx.fillRect(0,GROUND+player.h,W,3);
+  // ground lines
+  ctx.strokeStyle='#1e293b';ctx.lineWidth=1;
+  for(let x=(-(bgOffset*2)%60);x<W;x+=60){ctx.beginPath();ctx.moveTo(x,GROUND+player.h+3);ctx.lineTo(x+30,GROUND+player.h+3);ctx.stroke();}
+
+  // obstacles
+  obstacles.forEach(o=>{
+    ctx.fillStyle='#dc2626';
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+    ctx.fillStyle='#b91c1c';
+    ctx.fillRect(o.x,o.y,o.w,4);
+    ctx.fillStyle='#ef4444';
+    ctx.fillRect(o.x,o.y,3,o.h);
+  });
+
+  // player
+  const px=player.x,py=player.y,pw=player.w,ph=player.h;
+  const inAir=player.jumps>0;
+  // body
+  ctx.fillStyle=inAir?'#06b6d4':'#7c3aed';
+  ctx.beginPath();ctx.roundRect(px,py,pw,ph-10,6);ctx.fill();
+  // head
+  ctx.fillStyle='#a78bfa';
+  ctx.beginPath();ctx.roundRect(px+4,py-14,pw-8,16,4);ctx.fill();
+  // eye
+  ctx.fillStyle='#0a0b0f';ctx.beginPath();ctx.arc(px+pw-10,py-8,2.5,0,Math.PI*2);ctx.fill();
+  // legs (running animation)
+  const legPhase=frame*0.18;
+  const l1y=inAir?0:Math.sin(legPhase)*5;
+  const l2y=inAir?0:Math.sin(legPhase+Math.PI)*5;
+  ctx.fillStyle='#5b21b6';
+  ctx.fillRect(px+4,py+ph-12,8,12+l1y);
+  ctx.fillRect(px+pw-12,py+ph-12,8,12+l2y);
+
+  // particles
+  particles.forEach(p=>{ctx.globalAlpha=p.life/20;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill();});
+  ctx.globalAlpha=1;
+}
+
+function endGame(){
+  running=false;
+  if(score>best){best=score;document.getElementById('best').textContent=best;}
+  const ov=document.getElementById('overlay');
+  ov.className='overlay gameover';
+  ov.innerHTML=`<h2>YOU CRASHED</h2><p>Score: ${score} &nbsp;|&nbsp; Best: ${best}<br/>Speed reached: ${speed.toFixed(1)}x</p><button class="restart-btn" onclick="startGame()">TRY AGAIN</button>`;
+  ov.style.display='flex';
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='ArrowUp'){jump();e.preventDefault();}
+  if(e.key==='r'||e.key==='R')startGame();
+});
+canvas.addEventListener('click',jump);
+</script>
+</body>
+</html>
