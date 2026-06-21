@@ -204,16 +204,9 @@ for(let i = asteroids.length - 1; i >= 0; i--) {
     // asteroid escaped screen
     if(a.y - a.r > H){
 
-        asteroids.splice(i,1);
+    asteroids.splice(i,1);
 
-        lives--;
-        updateLives();
-
-        if(lives <= 0){
-            endGame();
-            return;
-        }
-    }
+    continue;
 }
 
   // powerup-player
