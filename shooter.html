@@ -140,15 +140,52 @@ function update(){
   });
 
   // asteroid-player collisions
-  asteroids.forEach((a,ai)=>{
-    if(a.y>H-20&&Math.hypot(a.x-player.x,a.y-player.y)<a.r+14){
-      spawnParticles(a.x,a.y,'#ef4444',20);
-      asteroids.splice(ai,1);
-      lives--;updateLives();
-      if(lives<=0){endGame();return;}
+for(let i = asteroids.length - 1; i >= 0; i--) {
+
+    const a = asteroids[i];
+
+    const shipLeft = player.x - player.w / 2;
+    const shipRight = player.x + player.w / 2;
+    const shipTop = player.y - player.h / 2;
+    const shipBottom = player.y + player.h / 2;
+
+    const collision =
+        a.x + a.r > shipLeft &&
+        a.x - a.r < shipRight &&
+        a.y + a.r > shipTop &&
+        a.y - a.r < shipBottom;
+
+    if(collision){
+
+        spawnParticles(a.x,a.y,'#ef4444',20);
+
+        asteroids.splice(i,1);
+
+        lives--;
+        updateLives();
+
+        if(lives <= 0){
+            endGame();
+            return;
+        }
+
+        continue;
     }
-    if(a.y>H+a.r){asteroids.splice(ai,1);lives--;updateLives();if(lives<=0)endGame();}
-  });
+
+    // asteroid escaped screen
+    if(a.y - a.r > H){
+
+        asteroids.splice(i,1);
+
+        lives--;
+        updateLives();
+
+        if(lives <= 0){
+            endGame();
+            return;
+        }
+    }
+}
 
   // powerup-player
   powerups.forEach((p,pi)=>{
